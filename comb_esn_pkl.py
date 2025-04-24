@@ -3,13 +3,13 @@ import joblib
 from ESN_Train_GPU import EchoStateNetworkGPU
 
 # File paths for the .pkl files to combine
-file1_path = 'c://Users/cks/Desktop/FILES/Projects/Code/Echo-Sate-Networks-Chatbot/models/esn_model_gpu_batch_1.pkl'
-file2_path = 'c://Users/cks/Desktop/FILES/Projects/Code/Echo-Sate-Networks-Chatbot/models/esn_model_gpu_batch_2.pkl'
+file1_path = 'models/esn_model_gpu_batch_1.pkl'
+file2_path = 'models/esn_model_gpu_batch_2.pkl'
 
 
 
 # Output file path for the combined .pkl file
-output_file_path = 'c://Users/cks/Desktop/FILES/Projects/Code/Echo-Sate-Networks-Chatbot/SavedModels/combined_model.pkl'
+output_file_path = 'SavedModels/combined_model.pkl'
 
 
 # Load data from the first .pkl file

@@ -3,11 +3,11 @@ import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 # File paths for the .pkl files to combine
-file1_path = 'C:/Users/cks/Desktop/FILES/Projects/Code/Echo-Sate-Networks-Chatbot/models/vectorizer_gpu_batch_1.pkl'
-file2_path = 'C:/Users/cks/Desktop/FILES/Projects/Code/Echo-Sate-Networks-Chatbot/models/vectorizer_gpu_batch_2.pkl'
+file1_path = 'models/vectorizer_gpu_batch_1.pkl'
+file2_path = 'models/vectorizer_gpu_batch_2.pkl'
 
 # Output file path for the combined .pkl file
-output_file_path = 'c://Users/cks/Desktop/FILES/Projects/Code/Echo-Sate-Networks-Chatbot/SavedModels/combined_vectorizer_model.pkl'
+output_file_path = 'SavedModels/combined_vectorizer_model.pkl'
 
 # Load the TfidfVectorizer objects
 with open(file1_path, 'rb') as file1:
