@@ -1,2 +1,6 @@
 models/**
 SavedModels/**
+venv/**
+nltk_data/**
+crawled_texts/**
+saved_pkls/**

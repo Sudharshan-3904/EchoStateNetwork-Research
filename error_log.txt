@@ -1,0 +1,3 @@
+
+2025-05-01 10:21:01: 'NoneType' object has no attribute 'word_index'
+2025-05-01 10:21:24: 'NoneType' object has no attribute 'word_index'
