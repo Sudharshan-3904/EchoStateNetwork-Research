@@ -1,6 +1,6 @@
 import pickle
 import joblib
-from ESN_Train_GPU import EchoStateNetworkGPU
+from interactive_esn_chatbot import EnhancedESN
 
 # File paths for the .pkl files to combine
 file1_path = 'models/esn_model_gpu_batch_1.pkl'

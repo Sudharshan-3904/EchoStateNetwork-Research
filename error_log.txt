@@ -1,3 +1,6 @@
 
 2025-05-01 10:21:01: 'NoneType' object has no attribute 'word_index'
 2025-05-01 10:21:24: 'NoneType' object has no attribute 'word_index'
+2025-05-02 16:45:44: size mismatch, got input (20), mat (20x2001), vec (4000001)
+2025-05-02 16:48:18: With n_samples=0, test_size=0.1 and train_size=None, the resulting train set will be empty. Adjust any of the aforementioned parameters.
+2025-05-05 09:17:37: size mismatch, got input (20), mat (20x2001), vec (4000001)
