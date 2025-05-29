@@ -6,15 +6,15 @@ This project is a research and prototyping environment for experimenting with Ec
 
 ## Table of Contents
 
-- [Objectives] (#Objectives)
-- [Project Structure] (#project-structure)
-- [Setup Instructions] (#setup-instructions)
-- [Usage Guide] (#usage-guide)
-- [Dataset Information] (#dataset-information)
-- [Utilities] (#utilities)
-- [Research Findings] (#research-findings)
-- [Future Works] (#future-works)
-- [Acknowledgments] (#acknowledgements)
+1. [Objectives](#objectives)
+2. [Project Structure](#project-structure)
+3. [Setup Instructions](#setup-instructions)
+4. [Usage Guide](#usage-guide)
+5. [Dataset Information](#dataset-information)
+6. [Utilities](#utilities)
+7. [Research Findings](#research-findings)
+8. [Future Works](#future-works)
+9. [Acknowledgments](#acknowledgments)
 
 ---
 
