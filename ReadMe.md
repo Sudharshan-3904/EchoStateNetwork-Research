@@ -50,7 +50,7 @@ The files have been organized into the following structure for clarity and maint
 │       ├── web_scrape.py
 │       └── web_token_scraping.py
 │
-├── legacy/
+├── utilities/
 │   ├── ESN_chat.py
 │   ├── ScrapeTrain.py
 │   ├── combining_pkls/
