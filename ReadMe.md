@@ -23,7 +23,7 @@ This project is a research and prototyping environment for experimenting with Ec
 
 - To build different variant of ESN
 - To apply ESN to varous Hardware ( CPU, GPU, NPU )
-- To validate the use of ECN for a chatbot
+- To validate the use of ESN for a chatbot
 - To explore other applications for ESN's
 
 ---
