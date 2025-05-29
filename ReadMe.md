@@ -77,9 +77,6 @@ The files have been organized into the following structure for clarity and maint
 │   ├── batch_times.csv
 │   └── error_log.txt
 │
-├── tests/
-│   └── test_main.py
-│
 └── requirements.txt
 ```
 
