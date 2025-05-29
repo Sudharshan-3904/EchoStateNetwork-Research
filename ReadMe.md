@@ -14,6 +14,7 @@ This project is a research and prototyping environment for experimenting with Ec
 - [Utilities](#utilities)
 - [Research Findings](#research-findings)
 - [Future Works](#future-works)
+- [Contributions](#contributions)
 - [Acknowledgments](#acknowledgments)
 
 ---
@@ -21,7 +22,7 @@ This project is a research and prototyping environment for experimenting with Ec
 ## Objectives
 
 - To build different variant of ESN
-- To apply ESN to varous Hardware ( CPU, GPU, etc. )
+- To apply ESN to varous Hardware ( CPU, GPU, NPU )
 - To validate the use of ECN for a chatbot
 - To explore other applications for ESN's
 
@@ -153,10 +154,10 @@ The `utilities/` directory contains basic and experimental scripts that are not 
 ## Research Findings
 
 - An ESN can handle small to mid term dependencies
-- An ESN cannot hanlde long term dependecies required for Chatot like applications
-- It can be used to assist a chatbot for simple tasks based on small substring
-- A model with 1000 nodes in reservoir is suffcient for modeling short term dependencies
+- An ESN cannot handle long term dependecies required for Chatot like applications
+- A separate vectorizer is needed for NLP
 - ESN's cannot handle large vocabularies
+- It can be used to assist a chatbot for simple tasks based on small substring
 - ESN properties have the following implications:
 
   | Property        | Purpose             | Description                                | Optimal value ( Experimental )    |
@@ -179,6 +180,12 @@ Echo State Networks are best suited for other input types and thus have applicai
 - Time series prediciton (Stock Price Prediciton, etc. )
 - Potentially Speeck Recognition
 - Financial data modelling
+
+---
+
+## Contributions
+
+Any futher collaborative exploration and experimentation learning is appreciated. The main goal of this repo is to act as a base code for understanding Echo State Networks in a practical way by applying. Please feel free to fork this repository and experiment.  
 
 ---
 
