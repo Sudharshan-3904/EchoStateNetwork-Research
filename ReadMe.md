@@ -88,8 +88,7 @@ The files have been organized into the following structure for clarity and maint
 
 - Requirements:
 
-  - Python 3.8 or above
-  - Compatible with Raspberry Pi 3 (limited model sizes and performance constraints)
+  - Python 3.10 or higher
 
 - Install dependencies:
 
@@ -97,7 +96,7 @@ The files have been organized into the following structure for clarity and maint
   pip install -r requirements.txt
   ```
 
-- Optional for GPU training (not available on Raspberry Pi):
+- Optional for GPU training:
 
   - torch with CUDA
   - sentence-transformers
