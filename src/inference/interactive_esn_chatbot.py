@@ -5,14 +5,12 @@ import pickle
 import time
 import csv
 import os
-import urllib.parse
 from collections import deque
 import random
 
-from ESN_Model import EchoStateNetworkModular
+from src.models.ESN_Model import EchoStateNetworkModular, tprint
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from sklearn.metrics import mean_squared_error
 
 import nltk
 nltk.data.path.append("E:/Tester/ESN Modelling/esn_scraping/nltk_data")
@@ -34,11 +32,6 @@ try:
 except Exception as e:
     print(f"Tokenization error: {e}")
     exit(1)
-
-def timestamp_print(*args, **kwargs):
-    """Print with timestamp."""
-    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}]", *args, **kwargs)
 
 # ---------- Step 1: Scrape Paragraphs ----------
 def scrape_paragraphs(url):
@@ -78,7 +71,7 @@ def get_wiki_links(url, visited_urls, max_links=100):
         print(f"Error getting links from {url}: {e}")
         return []
 
-def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page=100):
+def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page=500):
     """
     Continuous crawler that processes URLs until reaching the max_urls limit.
     Returns a list of batches, where each batch is a list of URLs.
@@ -91,10 +84,10 @@ def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page
     # Track overall crawling time
     overall_start_time = time.time()
     
-    timestamp_print(f"🕸️ Starting Wikipedia crawler with limit of {max_urls} URLs in batches of {urls_per_batch}...")
+    tprint(f"🕸️ Starting Wikipedia crawler with limit of {max_urls} URLs in batches of {urls_per_batch}...")
     
     # Add more seed URLs using Wikipedia's random article feature
-    timestamp_print("Adding additional seed URLs from Wikipedia's random article feature...")
+    tprint("Adding additional seed URLs from Wikipedia's random article feature...")
     for _ in range(10):  # Add 10 random articles as seeds
         try:
             random_url = "https://en.wikipedia.org/wiki/Special:Random"
@@ -102,13 +95,13 @@ def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page
             if response.status_code == 200:
                 random_article_url = response.url
                 if random_article_url not in visited_urls and random_article_url not in urls_to_process:
-                    timestamp_print(f"Added random seed: {random_article_url}")
+                    tprint(f"Added random seed: {random_article_url}")
                     urls_to_process.append(random_article_url)
             time.sleep(0.5)  # Respect rate limits
         except Exception as e:
-            timestamp_print(f"Error getting random article: {str(e)}")
+            tprint(f"Error getting random article: {str(e)}")
     
-    timestamp_print(f"Starting with {len(urls_to_process)} seed URLs")
+    tprint(f"Starting with {len(urls_to_process)} seed URLs")
     
     # Process URLs until we reach the limit
     while total_urls_collected < max_urls and urls_to_process:
@@ -116,11 +109,11 @@ def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page
         batch_urls = []
         batch_start_time = time.time()
         
-        timestamp_print(f"\n====== Collecting Batch {len(all_batches) + 1} ======\n")
+        tprint(f"\n====== Collecting Batch {len(all_batches) + 1} ======\n")
         
         # If we don't have enough URLs to process, add more random articles
         if len(urls_to_process) < urls_per_batch:
-            timestamp_print("Adding more random articles to URL queue...")
+            tprint("Adding more random articles to URL queue...")
             for _ in range(20):  # Try to add 20 random articles
                 try:
                     random_url = "https://en.wikipedia.org/wiki/Special:Random"
@@ -131,7 +124,7 @@ def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page
                             urls_to_process.append(random_article_url)
                     time.sleep(0.5)  # Respect rate limits
                 except Exception as e:
-                    timestamp_print(f"Error getting random article: {str(e)}")
+                    tprint(f"Error getting random article: {str(e)}")
         
         # Process URLs for this batch
         while len(batch_urls) < urls_per_batch and urls_to_process and total_urls_collected < max_urls:
@@ -157,15 +150,15 @@ def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page
                         urls_to_process.append(link)
                 
                 # Progress update
-                timestamp_print(f"Added URL {len(batch_urls)}/{urls_per_batch}: {current_url}")
-                timestamp_print(f"Found {len(links)} new links, queue size: {len(urls_to_process)}")
-                timestamp_print(f"Total URLs collected: {total_urls_collected}/{max_urls}")
+                tprint(f"Added URL {len(batch_urls)}/{urls_per_batch}: {current_url}")
+                tprint(f"Found {len(links)} new links, queue size: {len(urls_to_process)}")
+                tprint(f"Total URLs collected: {total_urls_collected}/{max_urls}")
                 
                 # Respect Wikipedia's robots.txt
                 time.sleep(0.5)
                 
             except Exception as e:
-                timestamp_print(f"Error processing URL: {str(e)}")
+                tprint(f"Error processing URL: {str(e)}")
                 continue
         
         # Add batch if not empty
@@ -176,7 +169,7 @@ def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page
             batch_elapsed = time.time() - batch_start_time
             overall_elapsed = time.time() - overall_start_time
             
-            timestamp_print(
+            tprint(
                 f"✅ Batch {len(all_batches)} complete: {len(batch_urls)} URLs collected\n"
                 f"   Batch time: {batch_elapsed:.1f}s\n"
                 f"   Overall time: {overall_elapsed:.1f}s"
@@ -190,18 +183,18 @@ def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page
                 for url in batch_urls:
                     f.write(url + "\n")
         else:
-            timestamp_print(f"⚠️ Batch has no URLs, skipping...")
+            tprint(f"⚠️ Batch has no URLs, skipping...")
         
         # Check if we've reached the URL limit
         if total_urls_collected >= max_urls:
-            timestamp_print(f"🎯 Reached URL limit of {max_urls}. Stopping crawler.")
+            tprint(f"🎯 Reached URL limit of {max_urls}. Stopping crawler.")
             break
     
     # Final statistics
     overall_elapsed = time.time() - overall_start_time
     total_urls = sum(len(batch) for batch in all_batches)
     
-    timestamp_print(
+    tprint(
         f"\n🏁 Crawling complete!\n"
         f"   Total batches: {len(all_batches)}\n"
         f"   Total URLs: {total_urls}\n"
@@ -227,7 +220,6 @@ def main_batch_processing():
         "https://en.wikipedia.org/wiki/Robotics",
         "https://en.wikipedia.org/wiki/Computer_vision",
         "https://en.wikipedia.org/wiki/Expert_system",
-        # Add more diverse topics to increase coverage
         "https://en.wikipedia.org/wiki/History",
         "https://en.wikipedia.org/wiki/Science",
         "https://en.wikipedia.org/wiki/Mathematics",
@@ -235,7 +227,7 @@ def main_batch_processing():
     ]
     
     # Batch Settings
-    max_urls = 1000  # Total URL limit
+    max_urls = 10000  # Total URL limit
     urls_per_batch = 500  # URLs per batch
     
     # Update progress file path
@@ -246,7 +238,7 @@ def main_batch_processing():
     if os.path.exists(progress_file):
         with open(progress_file, "r") as f:
             completed_batches = len(f.readlines())
-        timestamp_print(f"Found previous progress: {completed_batches} batches completed")
+        tprint(f"Found previous progress: {completed_batches} batches completed")
     
     # Crawl all URLs until reaching the limit
     all_batches = crawl_wikipedia(
@@ -256,13 +248,13 @@ def main_batch_processing():
     )
     
     # Collect all sentence pairs from all batches
-    timestamp_print("\n🔄 Collecting all sentence pairs from all batches...")
+    tprint("\n🔄 Collecting all sentence pairs from all batches...")
     all_input_sentences = []
     all_target_sentences = []
     
     # If we have no batches, use seed URLs directly
     if not all_batches and seed_urls:
-        timestamp_print("No batches collected, using seed URLs directly...")
+        tprint("No batches collected, using seed URLs directly...")
         all_batches = [seed_urls[:urls_per_batch]]
     
     # Process each batch and train the model incrementally
@@ -271,19 +263,19 @@ def main_batch_processing():
     
     for batch_idx, batch_urls in enumerate(all_batches):
         batch_num = completed_batches + batch_idx + 1
-        timestamp_print(f"\n====== Processing Batch {batch_num} ======\n")
+        tprint(f"\n====== Processing Batch {batch_num} ======\n")
         
         if not batch_urls:
-            timestamp_print(f"⚠️ No URLs collected for batch {batch_num}, skipping...")
+            tprint(f"⚠️ No URLs collected for batch {batch_num}, skipping...")
             continue
         
         # Extract text from batch
-        timestamp_print(f"🔍 Extracting text from batch {batch_num} pages...")
+        tprint(f"🔍 Extracting text from batch {batch_num} pages...")
         batch_inputs = []
         batch_targets = []
         
         for i, url in enumerate(batch_urls, 1):
-            timestamp_print(f"Processing page {i}/{len(batch_urls)}: {url}")
+            tprint(f"Processing page {i}/{len(batch_urls)}: {url}")
             paragraphs = scrape_paragraphs(url)
             for para in paragraphs:
                 sentences = sent_tokenize(para)
@@ -292,7 +284,7 @@ def main_batch_processing():
                     batch_targets.append(sentences[i + 1])
             time.sleep(0.3)  # Reduced from 0.5 to 0.3
         
-        timestamp_print(f"✅ Collected {len(batch_inputs)} sentence pairs from batch {batch_num}")
+        tprint(f"✅ Collected {len(batch_inputs)} sentence pairs from batch {batch_num}")
         
         # Save progress
         with open(progress_file, "a") as f:
@@ -300,11 +292,11 @@ def main_batch_processing():
         
         # Skip if insufficient data
         if len(batch_inputs) < 50:
-            timestamp_print(f"⚠️ Batch {batch_num} has insufficient data, skipping...")
+            tprint(f"⚠️ Batch {batch_num} has insufficient data, skipping...")
             continue
             
         # Preprocess batch data
-        timestamp_print(f"🔄 Preprocessing batch {batch_num} data...")
+        tprint(f"🔄 Preprocessing batch {batch_num} data...")
         max_len = 20
         num_words = 5000
         
@@ -314,7 +306,7 @@ def main_batch_processing():
             X, y, _ = preprocess_text(batch_inputs, batch_targets, tokenizer=tokenizer, max_len=max_len, num_words=num_words)
         
         # Initialize or update ESN
-        timestamp_print(f"🧠 Training on batch {batch_num}...")
+        tprint(f"🧠 Training on batch {batch_num}...")
         if esn is None:
             esn = EchoStateNetworkModular(
                 input_size=X.shape[1],
@@ -332,10 +324,10 @@ def main_batch_processing():
             end = min(start + batch_size, len(X))
             batch_X, batch_y = X[start:end], y[start:end]
             esn.fit(batch_X, batch_y, regularization=1e-9)
-            timestamp_print(f"Trained on mini-batch {start//batch_size+1}/{len(X)//batch_size+1}")
+            tprint(f"Trained on mini-batch {start//batch_size+1}/{len(X)//batch_size+1}")
         
         # Save intermediate models
-        timestamp_print(f"💾 Saving model and tokenizer for batch {batch_num}...")
+        tprint(f"💾 Saving model and tokenizer for batch {batch_num}...")
         model_path = os.path.join(save_dir, f"esn_model_batch_{batch_num}.pkl")
         tokenizer_path = os.path.join(save_dir, f"esn_tokenizer_batch_{batch_num}.pkl")
         
@@ -349,7 +341,7 @@ def main_batch_processing():
         all_target_sentences.extend(batch_targets)
     
     # Final training on all collected data
-    timestamp_print("\n🚀 Final training on all collected data...")
+    tprint("\n🚀 Final training on all collected data...")
     if len(all_input_sentences) > 0:
         X, y, tokenizer = preprocess_text(all_input_sentences, all_target_sentences, tokenizer=tokenizer, max_len=max_len, num_words=num_words)
         
@@ -358,7 +350,7 @@ def main_batch_processing():
         batch_size = 128
         
         for epoch in range(num_epochs):
-            timestamp_print(f"\n==== Final Training Epoch {epoch+1}/{num_epochs} ====")
+            tprint(f"\n==== Final Training Epoch {epoch+1}/{num_epochs} ====")
             
             # Shuffle data for each epoch
             indices = np.arange(len(X))
@@ -373,10 +365,10 @@ def main_batch_processing():
                 
                 # Progress update
                 progress = min(100, (end / len(X_shuffled)) * 100)
-                timestamp_print(f"Epoch {epoch+1}/{num_epochs} - Batch {start//batch_size+1}/{len(X_shuffled)//batch_size+1} - {progress:.1f}%")
+                tprint(f"Epoch {epoch+1}/{num_epochs} - Batch {start//batch_size+1}/{len(X_shuffled)//batch_size+1} - {progress:.1f}%")
         
         # Save final model and tokenizer
-        timestamp_print("\n💾 Saving final model and tokenizer...")
+        tprint("\n💾 Saving final model and tokenizer...")
         model_path = os.path.join(save_dir, "esn_model_final.pkl")
         tokenizer_path = os.path.join(save_dir, "esn_tokenizer_final.pkl")
         
@@ -385,10 +377,10 @@ def main_batch_processing():
         with open(tokenizer_path, "wb") as f:
             pickle.dump(tokenizer, f)
         
-        timestamp_print(f"Model saved to {model_path}")
-        timestamp_print(f"Tokenizer saved to {tokenizer_path}")
+        tprint(f"Model saved to {model_path}")
+        tprint(f"Tokenizer saved to {tokenizer_path}")
     else:
-        timestamp_print("⚠️ No data collected. Cannot train model.")
+        tprint("⚠️ No data collected. Cannot train model.")
         return None, None
     
     return esn, tokenizer
@@ -467,7 +459,7 @@ def train_in_batches(X, y, batch_size=128, csv_path=None):
 
             batch_time = round(t1 - t0, 4)
             writer.writerow([start // batch_size + 1, batch_time])
-            timestamp_print(f"Trained on batch {start // batch_size + 1}, Time: {batch_time}s")
+            tprint(f"Trained on batch {start // batch_size + 1}, Time: {batch_time}s")
 
     return esn
 
@@ -586,51 +578,19 @@ def chat_with_esn(esn, tokenizer, max_len=20):
             print(f"Error processing input: {str(e)}")
             print(f"Bot: {random.choice(fallback_responses)}")
 
-# Modified ESN class with improved parameters for text generation
-class EnhancedESN(EchoStateNetworkModular):
-    def __init__(self, input_size, reservoir_size, output_size, spectral_radius=0.99, 
-                 sparsity=0.05, input_scaling=1.2, leaking_rate=0.2):
-        super().__init__(input_size, reservoir_size, output_size, 
-                         spectral_radius, sparsity, input_scaling, leaking_rate)
-        
-    def fit(self, inputs, targets, regularization=1e-9):
-        """Enhanced fit method with lower regularization"""
-        states = []
-        for input_vector in inputs:
-            self._update_reservoir(input_vector)
-            states.append(self.reservoir_state.flatten())
-        states = np.array(states)
-
-        states = np.hstack((np.ones((states.shape[0], 1)), states))
-
-        targets = np.array(targets)
-        self.W_out = np.dot(np.linalg.pinv(np.dot(states.T, states) + regularization * np.eye(states.shape[1])), np.dot(states.T, targets))
-        
-    def predict_with_temperature(self, inputs, temperature=0.7):
-        """Predict with temperature scaling for more diverse outputs"""
-        predictions = []
-        for input_vector in inputs:
-            self._update_reservoir(input_vector)
-            augmented_state = np.vstack((1, self.reservoir_state))
-            output = np.dot(self.W_out.T, augmented_state)
-            
-            # Apply temperature scaling
-            output = output / temperature
-            predictions.append(output.flatten())
-        return np.array(predictions)
 
 # ---------- Main Pipeline ----------
 if __name__ == "__main__":
-    timestamp_print("🚀 Starting batch processing of Wikipedia pages...")
+    tprint("🚀 Starting batch processing of Wikipedia pages...")
     
     try:
         esn, tokenizer = main_batch_processing()
         
         if esn is not None and tokenizer is not None:
-            timestamp_print("\n✅ Processing complete. Starting chat interface...")
+            tprint("\n✅ Processing complete. Starting chat interface...")
             chat_with_esn(esn, tokenizer)
         else:
-            timestamp_print("\n❌ Failed to train model due to insufficient data.")
+            tprint("\n❌ Failed to train model due to insufficient data.")
             
             # Try to load a previously saved model if available
             save_dir = "saved_pkls"
@@ -638,20 +598,20 @@ if __name__ == "__main__":
             tokenizer_path = os.path.join(save_dir, "esn_tokenizer_final.pkl")
             
             if os.path.exists(model_path) and os.path.exists(tokenizer_path):
-                timestamp_print("Attempting to load previously saved model...")
+                tprint("Attempting to load previously saved model...")
                 try:
                     with open(model_path, "rb") as f:
                         esn = pickle.load(f)
                     with open(tokenizer_path, "rb") as f:
                         tokenizer = pickle.load(f)
-                    timestamp_print("Successfully loaded previous model. Starting chat interface...")
+                    tprint("Successfully loaded previous model. Starting chat interface...")
                     chat_with_esn(esn, tokenizer)
                 except Exception as e:
-                    timestamp_print(f"Error loading previous model: {str(e)}")
+                    tprint(f"Error loading previous model: {str(e)}")
             else:
-                timestamp_print("No previous model found. Cannot start chat interface.")
+                tprint("No previous model found. Cannot start chat interface.")
     except Exception as e:
-        timestamp_print(f"\n❌ Error during processing: {str(e)}")
+        tprint(f"\n❌ Error during processing: {str(e)}")
         # Save error log
         with open("error_log.txt", "a") as f:
             f.write(f"\n{time.strftime('%Y-%m-%d %H:%M:%S')}: {str(e)}")

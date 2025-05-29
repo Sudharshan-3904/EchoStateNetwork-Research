@@ -4,4 +4,4 @@ venv/**
 nltk_data/**
 crawled_texts/**
 saved_pkls/**
-__pycache__/**
+__pycache__

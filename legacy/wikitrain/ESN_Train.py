@@ -9,7 +9,7 @@ import urllib.parse
 from collections import deque
 import random
 
-from ESN_Model import EchoStateNetworkModular
+from src.models.ESN_Model import EchoStateNetworkModular
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.metrics import mean_squared_error
@@ -78,7 +78,7 @@ def get_wiki_links(url, visited_urls, max_links=100):
         print(f"Error getting links from {url}: {e}")
         return []
 
-def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page=500):
+def crawl_wikipedia(seed_urls, max_urls=1000, urls_per_batch=500, links_per_page=100):
     """
     Continuous crawler that processes URLs until reaching the max_urls limit.
     Returns a list of batches, where each batch is a list of URLs.
@@ -227,6 +227,7 @@ def main_batch_processing():
         "https://en.wikipedia.org/wiki/Robotics",
         "https://en.wikipedia.org/wiki/Computer_vision",
         "https://en.wikipedia.org/wiki/Expert_system",
+        # Add more diverse topics to increase coverage
         "https://en.wikipedia.org/wiki/History",
         "https://en.wikipedia.org/wiki/Science",
         "https://en.wikipedia.org/wiki/Mathematics",
@@ -234,7 +235,7 @@ def main_batch_processing():
     ]
     
     # Batch Settings
-    max_urls = 10000  # Total URL limit
+    max_urls = 1000  # Total URL limit
     urls_per_batch = 500  # URLs per batch
     
     # Update progress file path
@@ -584,39 +585,6 @@ def chat_with_esn(esn, tokenizer, max_len=20):
         except Exception as e:
             print(f"Error processing input: {str(e)}")
             print(f"Bot: {random.choice(fallback_responses)}")
-
-# Modified ESN class with improved parameters for text generation
-class EnhancedESN(EchoStateNetworkModular):
-    def __init__(self, input_size, reservoir_size, output_size, spectral_radius=0.99, 
-                 sparsity=0.05, input_scaling=1.2, leaking_rate=0.2):
-        super().__init__(input_size, reservoir_size, output_size, 
-                         spectral_radius, sparsity, input_scaling, leaking_rate)
-        
-    def fit(self, inputs, targets, regularization=1e-9):
-        """Enhanced fit method with lower regularization"""
-        states = []
-        for input_vector in inputs:
-            self._update_reservoir(input_vector)
-            states.append(self.reservoir_state.flatten())
-        states = np.array(states)
-
-        states = np.hstack((np.ones((states.shape[0], 1)), states))
-
-        targets = np.array(targets)
-        self.W_out = np.dot(np.linalg.pinv(np.dot(states.T, states) + regularization * np.eye(states.shape[1])), np.dot(states.T, targets))
-        
-    def predict_with_temperature(self, inputs, temperature=0.7):
-        """Predict with temperature scaling for more diverse outputs"""
-        predictions = []
-        for input_vector in inputs:
-            self._update_reservoir(input_vector)
-            augmented_state = np.vstack((1, self.reservoir_state))
-            output = np.dot(self.W_out.T, augmented_state)
-            
-            # Apply temperature scaling
-            output = output / temperature
-            predictions.append(output.flatten())
-        return np.array(predictions)
 
 # ---------- Main Pipeline ----------
 if __name__ == "__main__":

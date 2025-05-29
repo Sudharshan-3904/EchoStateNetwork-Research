@@ -4,75 +4,9 @@ import torch
 from sklearn.feature_extraction.text import TfidfVectorizer
 import joblib
 import datetime
-import torch.cuda.nvtx as nvtx  # For CUDA profiling
+import torch.cuda.nvtx as nvtx
+from src.models.ESN_Model import EchoStateNetworkGPU, tprint
 
-def tprint(*args, **kwargs):
-    """Print with timestamp"""
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-    print(f"[{timestamp}]", *args, **kwargs)
-
-class EchoStateNetworkGPU:
-    def __init__(self, input_size, reservoir_size, output_size, spectral_radius=0.95, 
-                 sparsity=0.1, input_scaling=1.0, leaking_rate=1.0, device='cuda'):
-        self.device = device
-        self.input_size = input_size
-        self.reservoir_size = reservoir_size
-        self.output_size = output_size
-        self.spectral_radius = spectral_radius
-        self.sparsity = sparsity
-        self.input_scaling = input_scaling
-        self.leaking_rate = leaking_rate
-        
-        self.initialize_weights()
-
-    def initialize_weights(self):
-        self.W_in = torch.empty((self.reservoir_size, self.input_size + 1), 
-                               device=self.device).uniform_(-self.input_scaling, self.input_scaling)
-        
-        self.W = torch.empty((self.reservoir_size, self.reservoir_size), 
-                            device=self.device).uniform_(-0.5, 0.5)
-        
-        mask = (torch.rand(self.W.shape, device=self.device) > self.sparsity).float()
-        self.W *= mask
-        
-        eigenvalues = torch.linalg.eigvals(self.W)
-        max_abs_eigenvalue = torch.max(torch.abs(eigenvalues))
-        self.W *= self.spectral_radius / max_abs_eigenvalue
-
-        self.W_out = None
-        self.reservoir_state = torch.zeros((self.reservoir_size, 1), device=self.device)
-
-    def _update_reservoir(self, input_vector):
-        input_vector = input_vector.reshape(-1, 1)
-        augmented_input = torch.vstack((torch.ones(1, device=self.device), input_vector))
-        pre_activation = torch.mm(self.W_in, augmented_input) + torch.mm(self.W, self.reservoir_state)
-        self.reservoir_state = (1 - self.leaking_rate) * self.reservoir_state + \
-                             self.leaking_rate * torch.tanh(pre_activation)
-
-    def collect_states(self, inputs):
-        states = []
-        for input_vector in inputs:
-            self._update_reservoir(input_vector)
-            states.append(self.reservoir_state.flatten())
-        states = torch.stack(states)
-        return torch.hstack((torch.ones(states.shape[0], 1, device=self.device), states))
-
-    def fit(self, inputs, targets, regularization=1e-8):
-        states = self.collect_states(inputs)
-        targets = torch.tensor(targets, device=self.device)
-        identity = torch.eye(states.shape[1], device=self.device)
-        temp = torch.mm(states.T, states) + regularization * identity
-        self.W_out = torch.mm(torch.linalg.pinv(temp), torch.mm(states.T, targets))
-
-    def predict(self, inputs):
-        predictions = []
-        for input_vector in inputs:
-            self._update_reservoir(input_vector)
-            augmented_state = torch.vstack((torch.ones(1, device=self.device), 
-                                          self.reservoir_state))
-            output = torch.mm(self.W_out.T, augmented_state)
-            predictions.append(output.flatten())
-        return torch.stack(predictions).cpu().numpy()
 
 def read_text_files_batch(data_dir, start_idx, batch_size):
     texts = []
@@ -87,9 +21,12 @@ def read_text_files_batch(data_dir, start_idx, batch_size):
     return texts, end_idx < len(filenames)
 
 def save_model(esn, vectorizer, model_path, vectorizer_path):
-    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    # Move model to CPU before saving
+    # esn.cpu()
     joblib.dump(esn, model_path)
     joblib.dump(vectorizer, vectorizer_path)
+    # Move model back to GPU
+    # esn.cuda()
 
 def main():
     # Ensure single GPU optimization
@@ -102,11 +39,11 @@ def main():
         # Get GPU properties
         props = torch.cuda.get_device_properties(0)
         tprint("CUDA Device Properties:")
-        tprint(f"\tDevice: {props.name}")
-        tprint(f"\tMemory: {props.total_memory / 1024**3:.2f} GB")
-        tprint(f"\tCUDA Capability: {props.major}.{props.minor}")
-        tprint(f"\tCUDA Cores: {props.multi_processor_count * 64}")
-        tprint(f"\tShared Memory: {props.max_threads_per_multi_processor / 1024:.0f} KB")
+        tprint(f"  Device: {props.name}")
+        tprint(f"  Memory: {props.total_memory / 1024**3:.2f} GB")
+        tprint(f"  CUDA Capability: {props.major}.{props.minor}")
+        tprint(f"  CUDA Cores: {props.multi_processor_count * 64}")
+        tprint(f"  Shared Memory: {props.max_threads_per_multi_processor / 1024:.0f} KB")
         
         # Optimize CUDA settings for single GPU
         torch.backends.cudnn.benchmark = True
@@ -178,8 +115,8 @@ def main():
             
             # Monitor GPU memory usage
             tprint(f"GPU Memory Usage:")
-            tprint(f"\tAllocated: {torch.cuda.memory_allocated(0)/1e9:.2f} GB")
-            tprint(f"\tReserved:  {torch.cuda.memory_reserved(0)/1e9:.2f} GB")
+            tprint(f"  Allocated: {torch.cuda.memory_allocated(0)/1e9:.2f} GB")
+            tprint(f"  Reserved:  {torch.cuda.memory_reserved(0)/1e9:.2f} GB")
             
             # Save model and clear GPU memory
             model_path = os.path.join('models', f'esn_model_gpu_batch_{batch_number}.pkl')
@@ -189,6 +126,7 @@ def main():
             
             total_files_processed += len(texts)
             tprint(f"Total files processed: {total_files_processed}")
+            tprint(f"New Starting Index: {start_idx + batch_size}")
             
             # To run a new batch without memory issues, clear the previous batch data
             del esn, X, y

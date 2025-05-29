@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import numpy as np
 import pickle
 import nltk
-from ESN_Model import EchoStateNetworkModular
+from src.models.ESN_Model import EchoStateNetworkModular
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from sklearn.metrics import mean_squared_error

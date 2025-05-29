@@ -5,89 +5,8 @@ import random
 import torch
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import time
+from src.models.ESN_Model import ESNModelGPU, tprint
 
-def timestamp_print(*args, **kwargs):
-    """Print with timestamp."""
-    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}]", *args, **kwargs)
-
-class ESNModelGPU:
-    """GPU-accelerated wrapper for the ESN model"""
-    def __init__(self, cpu_model):
-        # Check if CUDA is available
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        if self.device.type == 'cuda':
-            timestamp_print(f"Using GPU: {torch.cuda.get_device_name(0)}")
-            # Get GPU memory info
-            total_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3
-            timestamp_print(f"GPU Memory: {total_memory:.2f} GB")
-        else:
-            timestamp_print("CUDA not available. Using CPU.")
-        
-        # Copy model parameters to GPU
-        self.input_size = cpu_model.input_size
-        self.reservoir_size = cpu_model.reservoir_size
-        self.output_size = cpu_model.output_size
-        self.spectral_radius = cpu_model.spectral_radius
-        self.sparsity = cpu_model.sparsity
-        self.input_scaling = cpu_model.input_scaling
-        self.leaking_rate = cpu_model.leaking_rate
-        
-        # Convert weights to PyTorch tensors on GPU
-        self.W_in = torch.tensor(cpu_model.W_in, device=self.device, dtype=torch.float32)
-        self.W = torch.tensor(cpu_model.W, device=self.device, dtype=torch.float32)
-        self.W_out = torch.tensor(cpu_model.W_out, device=self.device, dtype=torch.float32) if cpu_model.W_out is not None else None
-        self.reservoir_state = torch.tensor(cpu_model.reservoir_state, device=self.device, dtype=torch.float32)
-        
-        # Enable CUDA optimizations
-        if self.device.type == 'cuda':
-            torch.backends.cudnn.benchmark = True
-            torch.backends.cudnn.enabled = True
-            # Enable TensorFloat-32 for faster computation on Ampere GPUs
-            torch.backends.cuda.matmul.allow_tf32 = True
-    
-    def _update_reservoir(self, input_vector):
-        """Update the reservoir state with the given input vector."""
-        # Convert input to tensor if it's not already
-        if not isinstance(input_vector, torch.Tensor):
-            input_vector = torch.tensor(input_vector, device=self.device, dtype=torch.float32)
-        
-        # Add bias term
-        input_with_bias = torch.cat([torch.ones(1, device=self.device), input_vector])
-        
-        # Calculate new state
-        new_state = torch.tanh(torch.matmul(self.W_in, input_with_bias) + 
-                              torch.matmul(self.W, self.reservoir_state))
-        
-        # Apply leaking rate
-        self.reservoir_state = (1 - self.leaking_rate) * self.reservoir_state + self.leaking_rate * new_state
-    
-    def predict(self, inputs):
-        """Predict outputs for the given inputs."""
-        # Convert inputs to tensor if it's not already
-        if not isinstance(inputs, torch.Tensor):
-            inputs = torch.tensor(inputs, device=self.device, dtype=torch.float32)
-        
-        predictions = []
-        with torch.no_grad():  # Disable gradient calculation for inference
-            for i in range(inputs.shape[0]):
-                input_vector = inputs[i]
-                self._update_reservoir(input_vector)
-                augmented_state = torch.cat([torch.ones(1, device=self.device), self.reservoir_state.flatten()])
-                output = torch.matmul(self.W_out.T, augmented_state)
-                predictions.append(output.cpu().numpy())
-        
-        return np.array(predictions)
-    
-    def predict_with_temperature(self, inputs, temperature=0.7):
-        """Predict with temperature scaling for more diverse outputs."""
-        # Get raw predictions
-        predictions = self.predict(inputs)
-        
-        # Apply temperature scaling (done on CPU as it's just post-processing)
-        scaled_predictions = predictions / temperature
-        
-        return scaled_predictions
 
 def load_model_and_tokenizer():
     """Load the combined ESN model and tokenizer."""
@@ -99,7 +18,7 @@ def load_model_and_tokenizer():
     if not os.path.exists(tokenizer_path):
         raise FileNotFoundError(f"Tokenizer file not found: {tokenizer_path}")
     
-    timestamp_print("Loading model and tokenizer...")
+    tprint("Loading model and tokenizer...")
     with open(model_path, "rb") as f:
         cpu_esn = pickle.load(f)
     with open(tokenizer_path, "rb") as f:
@@ -108,8 +27,8 @@ def load_model_and_tokenizer():
     # Convert the CPU model to GPU
     esn = ESNModelGPU(cpu_esn)
     
-    timestamp_print(f"Model loaded and transferred to GPU. Reservoir size: {esn.reservoir_size}")
-    timestamp_print(f"Tokenizer loaded. Vocabulary size: {len(tokenizer.word_index)}")
+    tprint(f"Model loaded and transferred to GPU. Reservoir size: {esn.reservoir_size}")
+    tprint(f"Tokenizer loaded. Vocabulary size: {len(tokenizer.word_index)}")
     
     return esn, tokenizer
 
@@ -132,10 +51,10 @@ def chat_with_esn(esn, tokenizer, max_len=20, temperature=0.7):
     conversation_history = []
     
     # Warm up the GPU
-    timestamp_print("Warming up GPU...")
+    tprint("Warming up GPU...")
     dummy_input = np.zeros((1, max_len))
     esn.predict(dummy_input)
-    timestamp_print("GPU ready for inference")
+    tprint("GPU ready for inference")
     
     while True:
         user_input = input("\nYou: ").strip()
@@ -246,7 +165,7 @@ if __name__ == "__main__":
         esn, tokenizer = load_model_and_tokenizer()
         chat_with_esn(esn, tokenizer)
     except Exception as e:
-        timestamp_print(f"Error: {str(e)}")
+        tprint(f"Error: {str(e)}")
         # Save error log
         with open("error_log.txt", "a") as f:
             f.write(f"\n{time.strftime('%Y-%m-%d %H:%M:%S')}: {str(e)}")

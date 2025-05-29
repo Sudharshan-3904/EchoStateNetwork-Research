@@ -1,6 +1,6 @@
 # **Echo State Network Architecture Ground Rules**
 
-Based on the provided article [ http://www.scholarpedia.org/article/Echo_state_network?source=post_page-----f910809d23d4---------------------- ] , here are the key ground rules to build an Echo State Network (ESN) architecture with high potential for proper functioning:
+Article: [ http://www.scholarpedia.org/article/Echo_state_network?source=post_page-----f910809d23d4---------------------- ]
 
 1. **Random RNN Design**: Create a random, large, fixed recurrent neural network (RNN) as the reservoir. The reservoir size `N` is task-dependent, and the neuron model can be any type (e.g., non-spiking leaky integrator neurons).
 2. **Input-Reservoir Connections**: Attach input units to the reservoir by creating random all-to-all connections.
@@ -49,7 +49,7 @@ These ground rules provide a foundation for building an ESN architecture with hi
 
 6. **27.18 ==> x˜(n) = tanh(W^in^[1; u(n)] + Wx(n − 1) + W^fb^y(n − 1))**
 
-## Guidelines:
+## Guidelines
 
 1. For challenging tasks use as big a reservoir as you can afford computationally.
 2. Select global parameters with smaller reservoirs, then scale to bigger ones.
