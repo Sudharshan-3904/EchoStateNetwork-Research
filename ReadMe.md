@@ -6,15 +6,15 @@ This project is a research and prototyping environment for experimenting with Ec
 
 ## Table of Contents
 
-- Objectives [ #Objectives ] Hi
-- Project Structure
-- Setup Instructions
-- Usage Guide
-- Dataset Information
-- Legacy Code
-- Research Findings
-- Future Works
-- Acknowledgments
+- [Objectives] (#Objectives)
+- [Project Structure] (#project-structure)
+- [Setup Instructions] (#setup-instructions)
+- [Usage Guide] (#usage-guide)
+- [Dataset Information] (#dataset-information)
+- [Utilities] (#utilities)
+- [Research Findings] (#research-findings)
+- [Future Works] (#future-works)
+- [Acknowledgments] (#acknowledgements)
 
 ---
 
@@ -39,37 +39,37 @@ The files have been organized into the following structure for clarity and maint
 │   │   ├── chat_with_combined_model_gpu.py
 │   │   └── interactive_chatbot.py
 │   ├── models/
-│   │   └── esn_model.py
+│   │   └── ESN_model.py
 │   ├── training/
 │   │   ├── train_next_token_gpu.py
 │   │   └── train_with_webscraping_gpu.py
 │   ├── utils/
 │   │   └── combine_multiple_esn.py
-│   ├── webscraping/
-│   │   ├── web_scrape.py
-│   │   └── web_token_scraping.py
+│   └── webscraping/
+│       ├── web_scrape.py
+│       └── web_token_scraping.py
 │
 ├── legacy/
-│   ├── esn_chat.py
-│   ├── scrape_train.py
+│   ├── ESN_chat.py
+│   ├── ScrapeTrain.py
 │   ├── combining_pkls/
 │   │   ├── comb_esn_pkl.py
 │   │   ├── comb_vect_pkl.py
 │   │   ├── combine_pkl.py
 │   │   └── vect_combine_pkl.py
 │   └── wikitrain/
-│       ├── esn_gpu_full.py
-│       ├── esn_train.py
-│       ├── esn_train_gpu.py
-│       ├── esn_train_npu.py
-│       └── esn_train_raw.txt
+│       ├── ESN_gpu_full.py
+│       ├── ESN_train.py
+│       ├── ESN_train_gpu.py
+│       ├── ESN_train_npu.py
+│       └── ESN_train_raw.txt
 │
 ├── data/
 │   ├── scraped_websites.txt
 │   └── urls.csv
 │
 ├── docs/
-│   └── architecture.md
+│   └── Extraceted Guidelines.md
 │
 ├── logs/
 │   ├── batch_progress.txt
@@ -133,16 +133,16 @@ python src/inference/interactive_chatbot.py
 
 ## Dataset Information
 
-- `data/urls.csv`: List of URLs used for scraping.
-- `data/scraped_websites.txt`: Raw text collected from web scraping sessions.
+- `data/urls.csv`: List of URLs used for crawling and scraping.
+- `data/scraped_websites.txt`: List of web pages crawled.
 
 Web scraping scripts are located in `src/webscraping/`.
 
 ---
 
-## Legacy Code
+## Utilities
 
-The `legacy/` directory contains older versions and experimental scripts that are not actively maintained but may be helpful for reference or revival.
+The `utilities/` directory contains basic and experimental scripts that are not actively maintained but may be helpful for reference or revival.s
 
 - `esn_chat.py` — basic chatbot prototype.
 - `wikitrain/` — initial ESN training tests on Wikipedia datasets.
