@@ -1,6 +1,6 @@
 # **Echo State Network Architecture Ground Rules**
 
-[Clink Here](#https://shorturl.at/JI4Eu)
+- [Article](#https://shorturl.at/JI4Eu)
 
 1. **Random RNN Design**: Create a random, large, fixed recurrent neural network (RNN) as the reservoir. The reservoir size `N` is task-dependent, and the neuron model can be any type (e.g., non-spiking leaky integrator neurons).
 2. **Input-Reservoir Connections**: Attach input units to the reservoir by creating random all-to-all connections.
