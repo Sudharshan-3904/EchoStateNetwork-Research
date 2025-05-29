@@ -1,6 +1,6 @@
 # Echo State Network Research Project
 
-This project is a research and prototyping environment for experimenting with Echo State Networks (ESNs) for natural language processing, specifically text generation, token prediction, and chatbot functionalities. It includes training scripts, inference modules, scraping utilities, and legacy experimental code.
+This project is a research and prototyping environment for experimenting with Echo State Networks (ESNs) for natural language processing, specifically text generation, token prediction, and chatbot functionalities. It includes training scripts, inference modules, scraping utilities, and experimental code.
 
 ---
 
